@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { X, File, Clock } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface FileItemProps {
   file: File
@@ -60,13 +61,15 @@ export function FileItem({ file, onRemove }: FileItemProps) {
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-medium truncate">{file.name}</h3>
-          <button
+          <Button
             onClick={() => onRemove(file)}
-            className="text-red-500 hover:text-red-700"
-            aria-label={`Remove ${file.name}`}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-red-500 hover:text-red-700"
           >
-            <X size={18} />
-          </button>
+            <X className="h-4 w-4" />
+            <span className="sr-only">Remove {file.name}</span>
+          </Button>
         </div>
         <div className="flex items-center text-xs text-gray-500">
           <File size={14} className="mr-1" />

@@ -4,20 +4,27 @@ import type React from "react"
 
 import { useCallback, useState, useRef } from "react"
 import { useDropzone } from "react-dropzone"
-import { Upload } from "lucide-react"
+import { Upload, AlertCircle, Loader2 } from "lucide-react"
 import { FileItem } from "./file-item"
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface VideoDropzoneProps {
   onFilesAdded: (files: File[]) => void
   files: File[]
 }
 
+interface FileError {
+  file: string
+  error: string
+}
+
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 const MAX_DURATION = 11 // 11 seconds (allowing a small margin)
 
 export default function VideoDropzone({ onFilesAdded, files }: VideoDropzoneProps) {
-  const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<FileError[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const checkVideoDuration = (file: File): Promise<number> => {
@@ -39,34 +46,38 @@ export default function VideoDropzone({ onFilesAdded, files }: VideoDropzoneProp
   }
 
   const processFiles = async (newFiles: File[]) => {
-    setError(null)
+    setIsProcessing(true)
+    setErrors([])
     const processedFiles = [...files]
+    const newErrors: FileError[] = []
 
     for (const file of newFiles) {
       if (file.size > MAX_FILE_SIZE) {
-        setError(`File ${file.name} exceeds the 50MB size limit.`)
+        newErrors.push({ file: file.name, error: "File exceeds the 50MB size limit." })
         continue
       }
 
       try {
         const duration = await checkVideoDuration(file)
         if (duration > MAX_DURATION) {
-          setError(`File ${file.name} exceeds the 10 second duration limit.`)
+          newErrors.push({ file: file.name, error: "File exceeds the 10 second duration limit." })
           continue
         }
 
         processedFiles.push(file)
       } catch (e) {
-        setError(`Error processing file ${file.name}: ${e}`)
+        newErrors.push({ file: file.name, error: "Error processing file." })
       }
     }
 
     if (processedFiles.length > 5) {
-      setError("You can only upload a maximum of 5 files.")
-      return
+      newErrors.push({ file: "Multiple files", error: "You can only upload a maximum of 5 files." })
+    } else {
+      onFilesAdded(processedFiles)
     }
 
-    onFilesAdded(processedFiles)
+    setErrors(newErrors)
+    setIsProcessing(false)
   }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -96,6 +107,11 @@ export default function VideoDropzone({ onFilesAdded, files }: VideoDropzoneProp
     onFilesAdded(files.filter((file) => file !== fileToRemove))
   }
 
+  const retryFailedUploads = () => {
+    const failedFiles = errors.map((error) => files.find((file) => file.name === error.file)).filter(Boolean) as File[]
+    processFiles(failedFiles)
+  }
+
   return (
     <div>
       <div
@@ -122,7 +138,28 @@ export default function VideoDropzone({ onFilesAdded, files }: VideoDropzoneProp
           Select Files
         </Button>
       </div>
-      {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+      {isProcessing && (
+        <div className="mt-4 flex items-center justify-center">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <span>Processing files...</span>
+        </div>
+      )}
+      {errors.length > 0 && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Errors occurred during file processing</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc pl-5">
+              {errors.map((error, index) => (
+                <li key={index}>{`${error.file}: ${error.error}`}</li>
+              ))}
+            </ul>
+            <Button onClick={retryFailedUploads} variant="outline" className="mt-2">
+              Retry Failed Uploads
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       {files.length > 0 && (
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           {files.map((file, index) => (
