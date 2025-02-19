@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { X, File, Clock } from "lucide-react"
+import { X, File, Clock, FileVideo } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface FileItemProps {
   file: File
   onRemove: (file: File) => void
+  className?: string
 }
 
-export function FileItem({ file, onRemove }: FileItemProps) {
+export default function FileItem({ file, onRemove, className }: FileItemProps) {
   const [thumbnail, setThumbnail] = useState<string | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
 
@@ -46,43 +48,31 @@ export function FileItem({ file, onRemove }: FileItemProps) {
   }
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
-      <div className="relative aspect-video">
-        {thumbnail && (
-          <Image
-            src={thumbnail || "/placeholder.svg"}
-            alt={file.name}
-            layout="fill"
-            objectFit="cover"
-            className="rounded-t-lg"
-          />
-        )}
-      </div>
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium truncate">{file.name}</h3>
-          <Button
-            onClick={() => onRemove(file)}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-red-500 hover:text-red-700"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Remove {file.name}</span>
-          </Button>
+    <div className={cn(
+      "flex items-center justify-between p-3 rounded-lg",
+      "border border-gray-200 dark:border-gray-700",
+      className
+    )}>
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="bg-primary/10 p-2 rounded-md">
+          <FileVideo className="h-4 w-4 text-primary" />
         </div>
-        <div className="flex items-center text-xs text-gray-500">
-          <File size={14} className="mr-1" />
-          <span>{file.type}</span>
+        <div className="min-w-0">
+          <p className="text-sm font-medium truncate">{file.name}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {formatFileSize(file.size)}
+          </p>
         </div>
-        <div className="text-xs text-gray-500 mt-1">{formatFileSize(file.size)}</div>
-        {duration !== null && (
-          <div className="flex items-center text-xs text-gray-500 mt-1">
-            <Clock size={14} className="mr-1" />
-            <span>{formatDuration(duration)}</span>
-          </div>
-        )}
       </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onRemove(file)}
+        className="text-gray-500 hover:text-red-600 dark:text-gray-400"
+      >
+        <X className="h-4 w-4" />
+        <span className="sr-only">Remove file</span>
+      </Button>
     </div>
   )
 }

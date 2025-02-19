@@ -5,9 +5,9 @@ import type React from "react"
 import { useCallback, useState, useRef } from "react"
 import { useDropzone } from "react-dropzone"
 import { Upload, AlertCircle, Loader2 } from "lucide-react"
-import { FileItem } from "./file-item"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import FileItem from "./file-item"
 
 interface VideoDropzoneProps {
   onFilesAdded: (files: File[]) => void
@@ -116,7 +116,7 @@ export default function VideoDropzone({ onFilesAdded, files }: VideoDropzoneProp
     <div>
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragActive ? "border-primary bg-primary/10" : "border-gray-300"
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors hover:border-primary/50 ${isDragActive ? "border-primary bg-primary/10" : "border-gray-300"
           }`}
       >
         <input {...getInputProps()} />
